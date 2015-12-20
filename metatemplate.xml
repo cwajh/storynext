@@ -1,0 +1,81 @@
+<storynext alwaysdeck='Ref(Deck)[None]' defaultdeck='Ref(Deck)[None]'>
+	<!-- AlwaysDeck: Storylets that don't need to be drawn. DefaultDeck: storylets in this file with no deck go there automatically. -->
+	<include mt-plural='includes' src='str' mt-qty='0+' />
+	<initial mt-qty='1'>
+		<set mt-plural='sets' quality='Ref(Quality)' to='int[None]' min='int[None]' max='int[None]' mt-qty='0+' />
+		<moveto setting='Ref(Setting)[None]' area='Ref(Area)[None]' mt-qty='0-1' />
+	</initial>
+	<image mt-plural='images' mt-id='global' height='int' width='int' scale='int[1]' src='str' mt-qty='0+'>
+		<alt mt-plural='alts' height='int' width='int' scale='int[1]' src='str' mt-qty='0+' />
+	</image>
+	<deck mt-plural='decks' mt-id='global' mt-qty='1+'>
+		<!-- Default for name is same as for qualities -->
+		<name mt-qty='0-1'>XML</name>
+		<card mt-plural='cards' storylet='Ref(Storylet)' discardable='bool[False]' mt-qty='0+' />
+	</deck>
+	<qformat mt-plural='qformats' mt-id='global' mt-qty='0+'>Formatter</qformat>
+	<setting mt-plural='settings' mt-id='global' mt-qty='1+'>
+		<name mt-qty='1'>XML</name>
+		<description mt-qty='1'>XML</description>
+		<area mt-plural='areas' mt-id='global' showname='bool[True]' mt-qty='1+'>
+			<name mt-qty='1'>XML</name>
+			<description mt-qty='1'>XML</description>
+			<welcome mt-qty='1'>XML</welcome>
+		</area>
+	</setting>
+	<!-- TODO: relationships and social actions -->
+	<!-- pyramidal and cpl are as in StoryNexus - rules for the relationship between <change> and <set>. effect storylets are for using items. template lets qualities inherit from each other. tags are space separated and used by the UI (f'rex as CSS or categories). technically that's what kind is too, but its special status is preserved from StoryNexus -->
+	<quality mt-plural='qualities' mt-id='global' mt-qty='0+' pyramidal='bool[False]' cpl='int[1]' persistent='bool[False]' kind='enum(thing,status)' format='Ref(QFormat)[None]' template='Ref(Quality)[None]' order='int[9999999]' effect='Ref(Storylet)[None]' image='Ref(Image)[None]' tags='str[None]'>
+		<!-- No name?! No problem, just apply caps to the ID. -->
+		<name mt-qty='0-1'>XML</name>
+		<description mt-qty='1'>XML</description>
+		<hint mt-qty='0-1'>XML</hint>
+		<note mt-qty='0-1'>XML</note>
+		<level mt-plural='levels' mt-qty='0+' value='int' image='Ref(Image)[None]'>
+			<description mt-qty='0-1'>XML</description>
+			<changetext mt-qty='0-1' image='Ref(Image)[None]'>Formatter</changetext>
+		</level>
+	</quality>
+	<event mt-plural='events' mt-id='global' mt-qty='0+' image='Ref(Image)[None]'>
+		<title mt-qty='1'>XML</title>
+		<body mt-qty='1'>XML</body>
+		<!-- TODO: support NumExpr as the ints for these -->
+		<set mt-plural='sets' quality='Ref(Quality)' to='int[None]' min='int[None]' max='int[None]' mt-qty='0+' />
+		<change mt-plural='changes' quality='Ref(Quality)' by='int[None]' min='int[None]' max='int[None]' mt-qty='0+' />
+	</event>
+	<storylet mt-plural='storylets' mt-id='global' mt-qty='0+' image='Ref(Image)[None]' mandatory='bool[False]' autofire='bool[False]' tags='str[None]'>
+		<!-- Mandatory: if this storylet appears in the Always deck and you qualify for it, you enter it automatically and can't back out. Higher on the deck list = first to go. -->
+		<!-- Autofire: if you play this storylet, it automatically skips to the first branch you qualify for. In other words, neither the storylet nor the branch uses its title/body. -->
+		<title mt-qty='0-1'>XML</title>
+		<body mt-qty='0-1'>XML</body>
+		<note mt-qty='0-1'>XML</note>
+		<!-- If no preview, truncate the body somehow, like StoryNexus does. -->
+		<preview mt-qty='0-1'>XML</preview>
+		<!-- VWRF stands for Visible When Requirement Fails. Again, these ints will need to be NumExprs eventually. -->
+		<require mt-plural='requirements' mt-qty='0+' quality='Ref(Quality)' min='int[None]' max='int[None]' vwrf='bool[False]' />
+		<location mt-qty='0-1' setting='Ref(Setting)[None]' area='Ref(Area)[None]' />
+		<branch mt-plural='branches' mt-id='scoped' mt-qty='1+'>
+			<require mt-plural='requirements' mt-qty='0+' quality='Ref(Quality)' min='int[None]' max='int[None]' vwrf='bool[False]' />
+			<title mt-qty='0-1'>XML</title>
+			<body mt-qty='0-1'>XML</body>
+			<button mt-qty='0-1'>XML</button>
+			<hint mt-qty='0-1'>XML</hint>
+			<!-- No cost = 1 action. TODO: exotic costs (e.g. FATE) and NumExprs -->
+			<cost mt-qty='0-1' actions='int' />
+			<!-- Pool tests are JKM count-duplicate dicepool style. TODO: "special" type, which takes a test=NumExpr. -->
+			<!-- Tests technically return a number indicating the degree of success. For classic Storynexus types that's only 0 or 1 though. -->
+			<test mt-plural='tests' mt-qty='0+' mt-id='local' quality='Ref(Quality)' difficulty='int[0]' type='enum(broad,narrow,pool)' visible='bool[True]' />
+			<result mt-plural='results' mt-qty='1+' linkedstorylet='Ref(Storylet)[None]'>
+				<depend mt-plural='dependencies' mt-qty='0+' test='LocalRef(test)' min='int[1]' max='int[None]' />
+				<title mt-qty='1'>XML</title>
+				<body mt-qty='1'>XML</body>
+				<set mt-plural='sets' quality='Ref(Quality)' to='int[None]' min='int[None]' max='int[None]' mt-qty='0+' />
+				<change mt-plural='changes' quality='Ref(Quality)' by='int[None]' min='int[None]' max='int[None]' mt-qty='0+' />
+				<moveto setting='Ref(Setting)[None]' area='Ref(Area)[None]' mt-qty='0-1' />
+				<trigger mt-qty='0+' mt-plural='triggers' effect='str' value='int[None]' />
+				<schedule mt-qty='0+' mt-plural='scheduled_events' event='Ref(Event)' after='timedelta' />
+			</result>
+		</branch>
+	</storylet>
+</storynext>
+

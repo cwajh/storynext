@@ -1,0 +1,367 @@
+<storynext alwaysdeck='always' defaultdeck='always'>
+	<deck id='always'></deck>
+	<setting id='fortitude'>
+		<!-- Should this setting maybe be "Town" instead? -->
+		<name>Fortitude</name>
+		<description>...</description>
+		<area id='fortitude docks' showname='yes'>
+			<name>Fortitude Docks</name>
+			<description>...</description>
+			<welcome>Welcome to Fortitude.</welcome>
+		</area>
+	</setting>
+	
+	<setting id='outside'>
+		<name>Another Place</name>
+		<description>You are far from home.</description>
+		<area id='white ship intro' showname='yes'>
+			<name>The White Ship</name>
+			<description>...</description>
+			<welcome>...</welcome>
+		</area>
+	</setting>
+	<initial>
+		<moveto setting='outside' area='white ship intro'/>
+	</initial>
+	<quality id='white ship intro' kind='status' tags='issue'>
+		<name>On a Ferry Ride</name>
+		<description>...</description>
+		<!-- Needs hint, and level change messages, especially for the first level. -->
+	</quality>
+	<quality id='your past' kind='status' tags='story'>
+		<name>Your Past</name>
+		<description><span class="ritualtext">People must remember where they come from.</span></description>
+		<level value='0'><changetext>You have no use for beginnings.</changetext></level>
+		<level value='1'>
+			<description>An Ordinary Past</description>
+			<changetext>You had a pretty ordinary life.</changetext>
+			<!-- 1: ...and Town blows your mind. 2: ...and it was holding you back. -->
+		</level>
+		<level value='3'>
+			<description>A Blessed Past</description>
+			<changetext>You had a pretty good life.</changetext>
+			<!-- ...but you're going to risk it for this anyway. -->
+		</level>
+		<level value='4'>
+			<description>An Extraordinary Past</description>
+			<changetext>You had a pretty unusual life.</changetext>
+			<!-- 4: ...including friends from Town. 5: ...including a mission that's led you here.  -->
+		</level>
+		<level value='6'>
+			<description>A Troubled Past</description>
+			<changetext>You had a pretty hard life.</changetext>
+			<!-- 6: ...and this is your stand against it. -->
+		</level>
+	</quality>
+	<quality id='connect' kind='status' tags='skills'>
+		<description>The forging of bonds, and finding support in that which is dear to you.</description>
+	</quality>
+	<quality id='decide' kind='status' tags='skills'>
+		<description>Working out your beliefs, and decisive actions that put them to the test.</description>
+	</quality>
+	<quality id='engage' kind='status' tags='skills'>
+		<description>Exploring and actively experiencing the world, and the wonder and horror of what you find there.</description>
+	</quality>
+	<quality id='focus' kind='status' tags='skills'>
+		<description>Single-minded work, hot-blooded enthusiasm, and wrestling your dreams.</description>
+	</quality>
+	<quality id='struggle' kind='status' tags='skills'>
+		<description>Standing up for yourself or against evil, and perseverance and integrity in adversity.</description>
+	</quality>
+	<quality id='adapt' kind='status' tags='skills'>
+		<description>Embracing pain and strangeness, rolling with the punches, context-switching, and transformative growth.</description>
+	</quality>
+	<storylet id='wake up on white ship' mandatory='yes'>
+		<location setting='outside' area='white ship intro'/>
+		<require quality='white ship intro' max='0' />
+		<title>The sound of sea. Darkness.</title>
+		<body>The gentle rocking of your berth stirs you from your sleep.</body>
+		<branch id='confused'>
+			<title>...wait. Berth?</title>
+			<body>Where are you?</body>
+			<button>Remember</button>
+			<result>
+				<title>The grogginess recedes...</title>
+				<body>
+					<p>You shake your head, and it begins to clear. Yes. That's right. You got on the boat. Passage to Town, one person, one way.</p>
+					<p>You make your way up from the cabins, and emerge out onto the deck. A thick fog encircles the boat; it's not pitch-black, but it <em>is</em> dark, and sea and sky are both drowned in muffled gray. Sailors go to and fro, tending to the ship and its course by the light of gently swinging lanterns.</p>
+				</body>
+				<change quality="white ship intro" by="1"/>
+			</result>
+		</branch>
+	</storylet>
+	<storylet id='white ship character building' mandatory='yes'>
+		<location setting='outside' area='white ship intro'/>
+		<require quality='white ship intro' min='1' max='7'/>
+		<title>[Waiting for the ship to come in...]</title>
+		<body>...</body>
+		<branch id='talk to ppl'>
+			<cost actions='0' />
+			<title>Talk to people</title>
+			<body>...</body>
+			<result linkedstorylet='white ship cb talking to ppl'>
+				<title>So you talked to people...</title>
+				<body>...</body>
+			</result>
+		</branch>
+		<branch id='see the sights'>
+			<cost actions='0' />
+			<title>See thie sights</title>
+			<body>...</body>
+			<result linkedstorylet='white ship cb sightsee'>
+				<title>Lookin around...</title>
+				<body>...</body>
+			</result>
+		</branch>
+		<branch id='think about yr past'>
+			<cost actions='0' />
+			<require quality='your past' max='0' />
+			<title>Think about your past</title>
+			<body>...</body>
+			<hint>This will establish your <span class="gameterm">Past</span> - what your life was before, and why you decided to leave it behind. <em>This is optional!</em> If you'd rather not decide yet, just leave this choice alone for now.</hint>
+			<result linkedstorylet='white ship cb past'>
+				<title>Lost in throught...</title>
+				<body>...</body>
+			</result>
+		</branch>
+	</storylet>
+
+	<storylet id='white ship cb sightsee'>
+		<location setting='outside' area='white ship intro'/>
+		<require quality='white ship intro' min='1' max='7'/>
+		<title>Looking around</title>
+		<body>...</body>
+		<branch id='red'>
+			<title>red</title>
+			<body>...</body>
+			<result>
+				<title>whoa!</title>
+				<body>...</body>
+				<change quality="white ship intro" by="1"/>
+				<change quality="engage" by="1"/>
+			</result>
+		</branch>
+		<branch id='green'>
+			<title>green</title>
+			<body>...</body>
+			<result>
+				<title>oof!</title>
+				<body>...</body>
+				<change quality="white ship intro" by="1"/>
+				<change quality="adapt" by="1"/>
+			</result>
+		</branch>
+		<branch id='orange'>
+			<title>orange</title>
+			<body>...</body>
+			<result>
+				<title>hey!</title>
+				<body>...</body>
+				<change quality="white ship intro" by="1"/>
+				<change quality="struggle" by="1"/>
+			</result>
+		</branch>
+		<branch id='purple'>
+			<title>purple</title>
+			<body>...</body>
+			<result>
+				<title>hi!</title>
+				<body>...</body>
+				<change quality="white ship intro" by="1"/>
+				<change quality="connect" by="1"/>
+			</result>
+		</branch>
+		<branch id='yellow'>
+			<title>yellow</title>
+			<body>...</body>
+			<result>
+				<title>mmmMMMMMMMMM</title>
+				<body>...</body>
+				<change quality="white ship intro" by="1"/>
+				<change quality="focus" by="1"/>
+			</result>
+		</branch>
+		<branch id='blue'>
+			<title>blue</title>
+			<body>...</body>
+			<result>
+				<title>hmm.</title>
+				<body>...</body>
+				<change quality="white ship intro" by="1"/>
+				<change quality="decide" by="1"/>
+			</result>
+		</branch>
+	</storylet>
+	<storylet id='white ship cb past'>
+		<location setting='outside' area='white ship intro'/>
+		<require quality='white ship intro' min='1' max='7'/>
+		<title>Thinking back</title>
+		<body>...</body>
+		<branch id='red'>
+			<title>red</title>
+			<body>...</body>
+			<!-- Ordinary. This is new. Wild. Something you'd never expected. You have to know. -->
+			<result>
+				<title>whoa!</title>
+				<body>...</body>
+				<change quality="white ship intro" by="1"/>
+				<change quality="engage" by="1"/>
+				<set quality="your past" to="1"/>
+			</result>
+		</branch>
+		<branch id='green'>
+			<title>green</title>
+			<body>...</body>
+			<!-- Ordinary, and hungry for change. Even if it gets weird. Even if it's wrong. That ordinariness was a leash on your neck - it may have kept you safe, but it also held you back. -->
+			<result>
+				<title>oof!</title>
+				<body>...</body>
+				<change quality="white ship intro" by="1"/>
+				<change quality="adapt" by="1"/>
+				<set quality="your past" to="2"/>
+			</result>
+		</branch>
+		<branch id='blue'>
+			<title>blue</title>
+			<body>...</body>
+			<!-- Blessed: This is a big gamble, giving up a pretty posh life for a backwards and isolated place like Town. But... you have a feeling. Like there's something there that you've never encountered. That'll be worth it. -->
+			<result>
+				<title>hmm.</title>
+				<body>...</body>
+				<change quality="white ship intro" by="1"/>
+				<change quality="decide" by="1"/>
+				<set quality="your past" to="3"/>
+			</result>
+		</branch>
+		<branch id='purple'>
+			<title>purple</title>
+			<body>...</body>
+			<!-- Extraordinary: You'd already heard about this place. You know people from here, out beyond the fog. You're reaching out. -->
+			<result>
+				<title>hi!</title>
+				<body>...</body>
+				<change quality="white ship intro" by="1"/>
+				<change quality="connect" by="4"/>
+			</result>
+		</branch>
+		<branch id='yellow'>
+			<title>yellow</title>
+			<body>...</body>
+			<!-- Extraordinary. You have something driving you, and now, it's driving you here. -->
+			<result>
+				<title>mmmMMMMMMMMM</title>
+				<body>...</body>
+				<change quality="white ship intro" by="1"/>
+				<change quality="focus" by="5"/>
+			</result>
+		</branch>
+		<branch id='orange'>
+			<title>orange</title>
+			<body>...</body>
+			<!-- It was pretty bad. This is your stand against it. -->
+			<result>
+				<title>hey!</title>
+				<body>...</body>
+				<change quality="white ship intro" by="1"/>
+				<change quality="struggle" by="1"/>
+				<set quality="your past" to="6"/>
+			</result>
+		</branch>
+	</storylet>
+
+	<storylet id='white ship cb talking to ppl'>
+		<location setting='outside' area='white ship intro'/>
+		<require quality='white ship intro' min='1' max='7'/>
+		<title>Talking to people</title>
+		<body>...</body>
+		<!-- Include something here about a chat already going on, for the Red stuff. -->
+		<branch id='red'>
+			<title>red</title>
+			<body>...</body>
+			<result>
+				<title>whoa!</title>
+				<body>...</body>
+				<change quality="white ship intro" by="1"/>
+				<change quality="engage" by="1"/>
+			</result>
+		</branch>
+		<branch id='green'>
+			<title>green</title>
+			<body>...</body>
+			<result>
+				<title>oof!</title>
+				<body>...</body>
+				<change quality="white ship intro" by="1"/>
+				<change quality="adapt" by="1"/>
+			</result>
+		</branch>
+		<branch id='orange'>
+			<title>orange</title>
+			<body>...</body>
+			<result>
+				<title>hey!</title>
+				<body>...</body>
+				<change quality="white ship intro" by="1"/>
+				<change quality="struggle" by="1"/>
+			</result>
+		</branch>
+		<branch id='purple'>
+			<title>purple</title>
+			<body>...</body>
+			<result>
+				<title>hi!</title>
+				<body>...</body>
+				<change quality="white ship intro" by="1"/>
+				<change quality="connect" by="1"/>
+			</result>
+		</branch>
+		<branch id='yellow'>
+			<title>yellow</title>
+			<body>...</body>
+			<result>
+				<title>mmmMMMMMMMMM</title>
+				<body>...</body>
+				<change quality="white ship intro" by="1"/>
+				<change quality="focus" by="1"/>
+			</result>
+		</branch>
+		<branch id='blue'>
+			<title>blue</title>
+			<body>...</body>
+			<result>
+				<title>hmm.</title>
+				<body>...</body>
+				<change quality="white ship intro" by="1"/>
+				<change quality="decide" by="1"/>
+			</result>
+		</branch>
+	</storylet>
+	
+	<storylet id='white ship comes into port' mandatory='yes' autofire='yes'>
+		<location setting='outside' area='white ship intro'/>
+		<require quality='white ship intro' min='8'/>
+		<branch id='Arrival (1 of ?)'>
+			<result>
+				<title>All at once, the fog breaks.</title>
+				<body><p>...</p></body>
+				<set quality='white ship intro' to='0'/>
+				<moveto area='fortitude docks'/>
+			</result>
+		</branch>
+	</storylet>
+
+	<storylet id='placeholder fortitude content'>
+		<location setting='fortitude' area='fortitude docks'/>
+		<title>blablabla</title>
+		<body>...</body>
+		<branch id='arbitrary'>
+			<title>Wanna explore?</title>
+			<body>aa</body>
+			<result>
+				<title>Game's not done, ya dork!</title>
+				<body>Buy the book!</body>
+				<trigger effect="the_end" />
+			</result>
+		</branch>
+	</storylet>
+</storynext>
