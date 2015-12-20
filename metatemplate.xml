@@ -3,7 +3,7 @@
 	<include mt-plural='includes' src='str' mt-qty='0+' />
 	<initial mt-qty='1'>
 		<set mt-plural='sets' quality='Ref(Quality)' to='int[None]' min='int[None]' max='int[None]' mt-qty='0+' />
-		<moveto setting='Ref(Setting)[None]' area='Ref(Area)[None]' mt-qty='0-1' />
+		<moveto setting='Ref(Setting)[None]' area='Ref(Area)' mt-qty='1' />
 	</initial>
 	<image mt-plural='images' mt-id='global' height='int' width='int' scale='int[1]' src='str' mt-qty='0+'>
 		<alt mt-plural='alts' height='int' width='int' scale='int[1]' src='str' mt-qty='0+' />
@@ -13,7 +13,6 @@
 		<name mt-qty='0-1'>XML</name>
 		<card mt-plural='cards' storylet='Ref(Storylet)' discardable='bool[False]' mt-qty='0+' />
 	</deck>
-	<qformat mt-plural='qformats' mt-id='global' mt-qty='0+'>Formatter</qformat>
 	<setting mt-plural='settings' mt-id='global' mt-qty='1+'>
 		<name mt-qty='1'>XML</name>
 		<description mt-qty='1'>XML</description>
@@ -29,6 +28,8 @@
 		<!-- No name?! No problem, just apply caps to the ID. -->
 		<name mt-qty='0-1'>XML</name>
 		<description mt-qty='1'>XML</description>
+		<formatted mt-qty='0-1'>Formatter</formatted>
+		<!-- Hints also appear in un-fulfilled requirements. -->
 		<hint mt-qty='0-1'>XML</hint>
 		<note mt-qty='0-1'>XML</note>
 		<level mt-plural='levels' mt-qty='0+' value='int' image='Ref(Image)[None]'>
@@ -39,6 +40,7 @@
 	<event mt-plural='events' mt-id='global' mt-qty='0+' image='Ref(Image)[None]'>
 		<title mt-qty='1'>XML</title>
 		<body mt-qty='1'>XML</body>
+		<warning mt-qty='0-1'>XML</warning>
 		<!-- TODO: support NumExpr as the ints for these -->
 		<set mt-plural='sets' quality='Ref(Quality)' to='int[None]' min='int[None]' max='int[None]' mt-qty='0+' />
 		<change mt-plural='changes' quality='Ref(Quality)' by='int[None]' min='int[None]' max='int[None]' mt-qty='0+' />
@@ -66,12 +68,12 @@
 			<!-- Tests technically return a number indicating the degree of success. For classic Storynexus types that's only 0 or 1 though. -->
 			<test mt-plural='tests' mt-qty='0+' mt-id='local' quality='Ref(Quality)' difficulty='int[0]' type='enum(broad,narrow,pool)' visible='bool[True]' />
 			<result mt-plural='results' mt-qty='1+' linkedstorylet='Ref(Storylet)[None]'>
-				<depend mt-plural='dependencies' mt-qty='0+' test='LocalRef(test)' min='int[1]' max='int[None]' />
+				<depend mt-plural='dependencies' mt-qty='0+' on='LocalRef(test)' min='int[1]' max='int[None]' />
 				<title mt-qty='1'>XML</title>
 				<body mt-qty='1'>XML</body>
 				<set mt-plural='sets' quality='Ref(Quality)' to='int[None]' min='int[None]' max='int[None]' mt-qty='0+' />
 				<change mt-plural='changes' quality='Ref(Quality)' by='int[None]' min='int[None]' max='int[None]' mt-qty='0+' />
-				<moveto setting='Ref(Setting)[None]' area='Ref(Area)[None]' mt-qty='0-1' />
+				<moveto setting='Ref(Setting)[None]' area='Ref(Area)' mt-qty='0-1' />
 				<trigger mt-qty='0+' mt-plural='triggers' effect='str' value='int[None]' />
 				<schedule mt-qty='0+' mt-plural='scheduled_events' event='Ref(Event)' after='timedelta' />
 			</result>

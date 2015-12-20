@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 from collections import namedtuple
 from lxml import etree
 import parsedatetime
@@ -141,6 +141,7 @@ def element_class_for_def(element, element_definitions):
 	argument_types = {}
 	singular_children = []
 	plural_children = {}
+	local_children = False
 	
 	for argument in element.arguments:
 		if argument.required:
@@ -163,6 +164,8 @@ def element_class_for_def(element, element_definitions):
 			plural_children[child.tag] = element_definitions[child.tag].plural
 		else:
 			raise MetaTemplateParseError("Element %s has child %s with unrecognized quantity"%(element, child))
+		if element_definitions[child.tag].id_type == 'local':
+			local_children = True
 	if element.id_type:
 		required_fields += ['id']
 		argument_types['id'] = element.id_type+"_id"
@@ -170,16 +173,18 @@ def element_class_for_def(element, element_definitions):
 		if element.children:
 			raise MetaTemplateParseError('Element %s has children but also has a body'%element)
 		if not required_fields and not optional_fields:
-			print 'HINT! This (%s) can be folded into a str...'%repr(element)
-			#def bogostr_new(cls, lx_element, parent_id, global_lookup, local_lookup):
-			#	return str.__new__(cls, inner_xml(lx_element))
-			#return type(element.tag.capitalize()+"")
+			#print 'HINT! This (%s) can be folded into a str...'%repr(element)
+			#print('folding %s into a str'%repr(element))
+			def bogostr_new(cls, lx_element, parent_id, global_lookup, local_lookup, class_directory, postprocessors=None):
+				return str.__new__(cls, inner_xml(lx_element))
+			return type(element.tag.capitalize()+"Str",(str,),{'__new__':bogostr_new})
 			#
 		optional_fields['body'] = ''
-	all_field_names = required_fields+optional_fields.keys()
+	all_field_names = required_fields+list(optional_fields.keys())
 	storetuple = namedtuple(element.tag.capitalize()+"StorageTuple", all_field_names)
+	storetuple.tag_name = element.tag
 
-	def new_from_element(cls, lx_element, parent_id, global_lookup, local_lookup, class_directory):
+	def new_from_element(cls, lx_element, parent_id, global_lookup, local_lookup, class_directory, postprocessors={}):
 		arguments = {}
 		for arg_name, arg_value in lx_element.items():
 			if arg_name not in all_field_names:
@@ -192,10 +197,13 @@ def element_class_for_def(element, element_definitions):
 			except KeyError:
 				raise
 		id_for_children = parent_id
-		if arguments.has_key('id'):
+		if 'id' in arguments:
 			id_for_children = arguments['id']
 		# Make a local copy so that this element's local children won't be shared by any of our ancestors or cousins.
-		local_lookup = dict(local_lookup)
+		if local_children:
+			children_local_lookup = dict(local_lookup)
+		else:
+			children_local_lookup = local_lookup
 		if element.body_type:
 			arguments['body'] = inner_xml(lx_element)
 		else:
@@ -206,7 +214,7 @@ def element_class_for_def(element, element_definitions):
 				child_tag = child_elem.tag.lower()
 				if not child_tag in class_directory:
 					raise TemplateParseError('Tag %s on line %d is an unknown type'%(child_elem, child_elem.sourceline))
-				child = class_directory[child_tag](child_elem, id_for_children, global_lookup, local_lookup, class_directory)
+				child = class_directory[child_tag](child_elem, id_for_children, global_lookup, children_local_lookup, class_directory, postprocessors)
 				if child_tag in plural_children:
 					arg_name = plural_children[child_tag]
 					if arg_name in arguments:
@@ -223,11 +231,17 @@ def element_class_for_def(element, element_definitions):
 		for arg_name in optional_fields:
 			if arg_name not in arguments:
 				arguments[arg_name] = optional_fields[arg_name]
+		if element.tag in postprocessors:
+			postprocessors[element.tag](arguments)
+			
 		new_element = storetuple.__new__(cls, **arguments)
-		if arguments.has_key('id'):
+		if 'id' in arguments:
+			lookup_key = (element.tag, arguments['id'])
 			if element.id_type == 'local':
-				local_lookup[(element.tag, arguments['id'])] = new_element
+				local_lookup[lookup_key] = new_element
 			else:
-				global_lookup[(element.tag, arguments['id'])] = new_element
+				if lookup_key in global_lookup:
+					raise TemplateParseError("Tag %s on line %d has an ID %s that's already in use by %s"%(lx_element,lx_element.sourceline,lookup_key,global_lookup[lookup_key]))
+				global_lookup[lookup_key] = new_element
 		return new_element
 	return type(element.tag.capitalize()+"Element", (storetuple,), {"__new__":new_from_element})

@@ -1,5 +1,7 @@
 <storynext alwaysdeck='always' defaultdeck='always'>
-	<deck id='always'></deck>
+	<deck id='always'>
+		<card storylet='wake up on white ship'/>
+	</deck>
 	<setting id='fortitude'>
 		<!-- Should this setting maybe be "Town" instead? -->
 		<name>Fortitude</name>
@@ -23,6 +25,11 @@
 	<initial>
 		<moveto setting='outside' area='white ship intro'/>
 	</initial>
+	<quality id='wtfwtf' kind='status'>
+		<name>Weaver</name>
+		<description>Who shepherds the search for the jewel, but cannot wish upon it.</description>
+		<hint>You cannot be the Weaver. This thing is coming soon.</hint>
+	</quality>
 	<quality id='white ship intro' kind='status' tags='issue'>
 		<name>On a Ferry Ride</name>
 		<description>...</description>
@@ -71,6 +78,21 @@
 	<quality id='adapt' kind='status' tags='skills'>
 		<description>Embracing pain and strangeness, rolling with the punches, context-switching, and transformative growth.</description>
 	</quality>
+
+	<!-- Silver and Black don't get Skills. They don't stick with you. But they don't build to a resolution, either. They ebb, and flow. -->
+	<quality id='night' kind='status' tags='tides'>
+		<description>This is only the beginning. This is only the shadow.</description>
+		<level value='0'><changetext>...the feeling passes.</changetext></level>
+		<level value='1'><changetext>You feel... something.</changetext></level>
+		<level value='2'><changetext>Hold to no conceptions.</changetext></level>
+	</quality>
+	<quality id='fog' kind='status' tags='tides'>
+		<description>Something is missing.</description>
+		<level value='0'><changetext>...the feeling passes.</changetext></level>
+		<level value='1'><changetext>You feel displaced.</changetext></level>
+		<level value='2'><changetext>Your heart is heavy.</changetext></level>
+	</quality>
+
 	<storylet id='wake up on white ship' mandatory='yes'>
 		<location setting='outside' area='white ship intro'/>
 		<require quality='white ship intro' max='0' />
@@ -106,7 +128,7 @@
 		</branch>
 		<branch id='see the sights'>
 			<cost actions='0' />
-			<title>See thie sights</title>
+			<title>See the sights</title>
 			<body>...</body>
 			<result linkedstorylet='white ship cb sightsee'>
 				<title>Lookin around...</title>
@@ -224,7 +246,7 @@
 		<branch id='blue'>
 			<title>blue</title>
 			<body>...</body>
-			<!-- Blessed: This is a big gamble, giving up a pretty posh life for a backwards and isolated place like Town. But... you have a feeling. Like there's something there that you've never encountered. That'll be worth it. -->
+			<!-- Blessed: This is a big gamble, giving up a pretty good, stable life to go to a backwards and isolated place like Town. But... you have a feeling. Like there's something there that you've never encountered. Something that'll be worth it. -->
 			<result>
 				<title>hmm.</title>
 				<body>...</body>
@@ -345,7 +367,7 @@
 				<title>All at once, the fog breaks.</title>
 				<body><p>...</p></body>
 				<set quality='white ship intro' to='0'/>
-				<moveto area='fortitude docks'/>
+				<moveto setting='fortitude' area='fortitude docks'/>
 			</result>
 		</branch>
 	</storylet>
@@ -361,6 +383,18 @@
 				<title>Game's not done, ya dork!</title>
 				<body>Buy the book!</body>
 				<trigger effect="the_end" />
+			</result>
+		</branch>
+		<branch id='TEST'>
+			<title>Requirements...</title>
+			<body>...</body>
+			<require quality="wtfwtf" min='1' vwrf='false' />
+			<test id='night' quality='night' type='pool' />
+			<result>
+				<depend on='night' min='2' />
+				<title>You cannot be the Weaver.</title>
+				<body>This thing is coming soon.</body>
+				<change quality='night' by='1' />
 			</result>
 		</branch>
 	</storylet>
