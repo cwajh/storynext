@@ -11,7 +11,7 @@
 	<deck mt-plural='decks' mt-id='global' mt-qty='1+'>
 		<!-- Default for name is same as for qualities -->
 		<name mt-qty='0-1'>XML</name>
-		<card mt-plural='cards' storylet='Ref(Storylet)' discardable='bool[False]' mt-qty='0+' />
+		<card mt-plural='cards' storylet='Ref(Storylet)' discardable='bool[True]' mt-qty='0+' />
 	</deck>
 	<setting mt-plural='settings' mt-id='global' mt-qty='1+'>
 		<name mt-qty='1'>XML</name>

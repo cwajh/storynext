@@ -9,6 +9,11 @@ import heapq
 
 #GENERIC_CHANGE_MESSAGE
 
+def log(*args,**kwargs):
+	pass
+#log = print
+
+
 def nth_pyramid_number(n):
 	return (n*(n+1))/2
 
@@ -48,6 +53,7 @@ def level_to_cp(level,cpl=1,pyramidal=False):
 		return (cpl*(level-1)+1) 
 
 Notification = collections.namedtuple("Notification","image message")
+SelectedStorylet = collections.namedtuple("SelectedStorylet","storylet failed_requirements")
 
 def level_change_notification(quality, level):
 	levels = quality.levels
@@ -96,13 +102,21 @@ class Character:
 			self.area = None
 			self.apply_outcomes(world.initial.sets)
 			self.apply_outcomes([world.initial.moveto])
+			self.cards = []
 		else:
 			self.qualities = collections.defaultdict(lambda:0, traits['qualities'])
 			if traits['events']:
 				events = {event.id:event for event in world.events}
 				self.pending_event_heap = [(q[0], events[q[1]]) for q in traits['events']]
+			else:
+				self.pending_event_heap = []
 			self.setting = traits['setting']
 			self.area = traits['area']
+			if traits['cards']:
+				storylets = {storylet.id:storylet for storylet in world.storylets}
+				self.cards = [storylets[q] for q in traits['cards']]
+			else:
+				self.cards = []
 		self.event_delegate = event_delegate
 	def traits(self):
 		return {
@@ -111,19 +125,46 @@ class Character:
 			'setting':self.setting,
 			'area':self.area
 		}
+	def qualifies_for(self, requirement):
+		value = self.qualities[requirement.quality.dereference().id]
+		if requirement.min is not None and requirement.min > value:
+			log('\tquality %s = %d but must be >= %d'%(requirement.quality.dereference().id, value, requirement.min))
+			return False
+		if requirement.max is not None and requirement.max < value:
+			log('\tquality %s = %d but must be <= %d'%(requirement.quality.dereference().id, value, requirement.max))
+			return False
+		# TODO: advanced?
+		log('\tquality %s (=%d) looks good'%(requirement.quality.dereference().id,value))
+		return True
+		
 	def eligible_storylets(self):
-		if not self.world.
-		##################################################### <== continue here. decks
-		for storylet in self.world.storylets:
+		if not self.world.alwaysdeck:
+			return
+		if not self.world.alwaysdeck.dereference():
+			return
+		
+		storylets = [card.storylet.dereference() for card in self.world.alwaysdeck.dereference().cards if card.storylet.dereference() is not None]
+		for storylet in storylets:
+			log('can we play `%s`?'%(storylet.id))
 			if storylet.location:
 				setting = storylet.location.setting
-				if setting is not None and setting != self.setting:
+				if setting is not None and setting.dereference() != self.setting:
+					log("\twe have to be in %s but we're in %s"%(setting.dereference(),self.setting))
 					continue
 				area = storylet.location.area
-				if area is not None and area != self.area:
+				if area is not None and area.dereference() != self.area:
+					log("\twe have to be in %s but we're in %s"%(area.dereference(),self.area))
 					continue
-			qualified = True
+			failed_requirements = []
 			for requirement in storylet.requirements:
+				if not self.qualifies_for(requirement):
+					failed_requirements.append(requirement)
+					if not requirement.vwrf:
+						break
+			else:
+				log('...passback')
+				# Qualified for all requirements, or failed with VWRF=true
+				yield storylet
 			
 	def register_event(self, event):
 		if self.event_delegate:

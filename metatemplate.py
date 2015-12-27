@@ -232,7 +232,7 @@ def element_class_for_def(element, element_definitions):
 			if arg_name not in arguments:
 				arguments[arg_name] = optional_fields[arg_name]
 		if element.tag in postprocessors:
-			postprocessors[element.tag](arguments)
+			postprocessors[element.tag](arguments, global_lookup)
 			
 		new_element = storetuple.__new__(cls, **arguments)
 		if 'id' in arguments:
