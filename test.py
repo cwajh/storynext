@@ -4,6 +4,8 @@ from lxml import etree
 import string
 import character
 import itertools
+import re
+import getch
 
 with open('metatemplate.xml') as qq:
 	template_doc = etree.parse(qq)
@@ -71,10 +73,19 @@ print("entities:", "\n\t".join(repr(q) for q in global_lookup.keys()))
 
 prettyprint(gameworld)
 
+print("=========================================================")
+
 chara = character.Character(gameworld,traits=None,event_delegate=(lambda x:print(x)))
-print(chara.traits())
-for storylet in chara.eligible_storylets():
-	print(storylet)
+#print(chara.traits())
+menu_items = list(zip(string.digits+string.ascii_lowercase,chara.eligible_storylets()))
+menu_dict = dict(menu_items)
+if len(menu_items) > 36:
+	raise NotImplementedError("Need pagination for %d storylets"%(len(menu_items)))
+for button, storylet in menu_items:
+	print('%s.\t%s'%(button.upper(), storylet.title))
+	# TODO: something better than this.
+	preview = storylet.preview or re.split('[.!?]', storylet.body)[0]+'...'
+	print("\t"+preview)
 #qq = open('fortitude.xml')
 #	print '========'
 #	print aaaa[key]
