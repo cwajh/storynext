@@ -11,7 +11,7 @@ import heapq
 
 def log(*args,**kwargs):
 	pass
-#log = print
+log = print
 
 
 def nth_pyramid_number(n):
@@ -164,7 +164,19 @@ class Character:
 			else:
 				log('...passback')
 				# Qualified for all requirements, or failed with VWRF=true
+				# TODO: return context
 				yield storylet
+	def eligible_branches_for_storylet(self, storylet):
+		for branch in storylet.branches:
+			log('can we do `%s`'%(branch.id))
+			for requirement in branch.requirements:
+				if not self.qualifies_for(requirement):
+					failed_requirements.append(requirement)
+					if not requirement.vwrf:
+						break
+			else:
+				log('...passback')
+				yield branch
 			
 	def register_event(self, event):
 		if self.event_delegate:
@@ -172,6 +184,8 @@ class Character:
 	def drain_pending_events(self):
 		while self.pending_event_heap and self.pending_event_heap[0][0] > time.time():
 			yield heapq.heappop(self.pending_event_heap)[1]
+	def perform_test(self, test):
+		raise NotImplementedError("TODO: Perform tests")
 	def apply_outcomes(self, outcomes):
 		for outcome in outcomes:
 			if outcome.tag_name == 'set':

@@ -6,6 +6,7 @@ import character
 import itertools
 import re
 import getch
+import sys
 
 with open('metatemplate.xml') as qq:
 	template_doc = etree.parse(qq)
@@ -86,6 +87,34 @@ for button, storylet in menu_items:
 	# TODO: something better than this.
 	preview = storylet.preview or re.split('[.!?]', storylet.body)[0]+'...'
 	print("\t"+preview)
+ch = getch.getch()
+if ch in ('\x03','\x04','\x1b'):
+	print("Bye!")
+	sys.exit(0)
+if ch.lower() not in menu_dict:
+	print("?????")
+	sys.exit(1)
+chosen_storylet = menu_dict[ch.lower()]
+print(storylet.title)
+print(storylet.body)
+menu_items = list(zip(string.digits+string.ascii_lowercase,chara.eligible_branches_for_storylet(storylet)))
+menu_dict = dict(menu_items)
+for button, branch in menu_items:
+	print('%s.\t%s%s'%(button.upper(), '[%s]'%branch.button if branch.button else "", branch.title))
+	print("\t"+branch.body)
+	if branch.hint:
+		print("\t(%s)"%branch.hint)
+ch = getch.getch()
+if ch in ('\x03','\x04','\x1b'):
+	print("Bye!")
+	sys.exit(0)
+if ch.lower() not in menu_dict:
+	print("?????")
+	sys.exit(1)
+
+	
+	
+
 #qq = open('fortitude.xml')
 #	print '========'
 #	print aaaa[key]
