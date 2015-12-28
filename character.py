@@ -6,6 +6,8 @@ import parsedatetime
 import time
 import collections
 import heapq
+from decimal import Decimal
+import random
 
 #GENERIC_CHANGE_MESSAGE
 
@@ -28,7 +30,7 @@ def cp_to_level(cp,cpl=1,pyramidal=False):
 			if cp==0:
 				return 0
 			if cp==1:
-				return 1
+				return 
 			# Not counting that first CP, and counting each CPL CP as 1CP,
 			# and then adding back in the level from the first CP...
 			return int(which_pyramid_number_is((cp-1)/cpl)) + 1
@@ -51,6 +53,7 @@ def level_to_cp(level,cpl=1,pyramidal=False):
 			return nth_pyramid_number(level)
 	else:
 		return (cpl*(level-1)+1) 
+		
 
 Notification = collections.namedtuple("Notification","image message")
 SelectedStorylet = collections.namedtuple("SelectedStorylet","storylet failed_requirements")
@@ -90,6 +93,44 @@ def cp_change_notification(quality, by=0):
 
 def event_scheduled_notification(event):
 	return Notification(event.image, event.warning or "Something's been set in motion.")
+
+PoolDigest = namedtuple('PoolDigest','best_double successful_double best_triple skillful_triple quadruple quintuple')
+def digest_pool(roll_result, quality_level):
+	best_double = None
+	successful_double = False
+	best_triple = None
+	skillful_triple = False
+	best_quadruple = None
+	quintuple = False
+	for die_face in set(roll_result):
+		how_many = len([matching_die for matching_die in roll_result if matching_die == die_face])
+		sets[die_face] = how_many
+		if how_many == 5:
+			quintuple = True
+		elif how_many == 4:
+			if best_quadruple is None or best_quadruple > die_face:
+				best_quadruple = die_face
+		elif how_many == 3:
+			if best_triple is None or best_triple > die_face:
+				best_triple = die_face
+				if die_face <= min(quality_level,5):
+					skillful_triple = True
+		elif how_many == 2:
+			if best_double is None or best_double > die_face:
+				best_double = die_face
+				if die_face <= min(quality_level,5):
+					successful_double = True
+	return PoolDigest(best_double, successful_double, best_triple, skillful_triple, quadruple, quintuple)
+
+def reroll_sixes(pool, rerolls):
+	for i in range(len(pool)):
+		if pool[i] == 6:
+			pool[i] = random.randrange(1,6)
+			rerolls -= 1
+			if rerolls < 1:
+				return
+	if 6 in pool and rerolls > 0:
+		reroll_sizes(pool, rerolls)
 
 class Character:
 	def __init__(self, world, traits = None, event_delegate = None):
@@ -184,8 +225,83 @@ class Character:
 	def drain_pending_events(self):
 		while self.pending_event_heap and self.pending_event_heap[0][0] > time.time():
 			yield heapq.heappop(self.pending_event_heap)[1]
+	def chance_to_pass_broad_test(self,test):
+		if test.scaler is None:
+			scaler = Decimal('.6')
+		else:
+			scaler = Decimal(test.scaler) / 100
+		quality = test.quality.dereference()
+		quality_level = cp_to_level(self.qualities[quality.id], quality.cpl, quality.pyramidal)
+		chance = (quality_level * scaler) / test.difficulty
+		return max(min(chance, 1), Decimal('.01'))
+	def chance_to_pass_narrow_test(self,test):
+		if test.scaler is None:
+			scaler = Decimal('.1')
+		else:
+			scaler = Decimal(test.scaler) / 100
+		quality = test.quality.dereference()
+		quality_level = cp_to_level(self.qualities[quality.id], quality.cpl, quality.pyramidal)
+		chance = ((quality_level - test.difficulty) * scaler) + Decimal('.5')
+		return max(min(chance, 1), Decimal('.1'))
+	def perform_luck_test(self, chance):
+		return 1 if (random.randrange(0,100)*Decimal('.01') < chance) else 0
+	def perform_pool_test(self, test):
+		quality = test.quality.dereference()
+		quality_level = cp_to_level(self.qualities[quality.id], quality.cpl, quality.pyramidal)
+		if test.scaler:
+			quality_level += test.scaler
+		# If you have 0 you can't win on doubles but can win on triples.
+		# If you have -3 or more, you replace 3 of the 5 dice with d10s
+		# If you have >5 you can reroll one six for each excess. [Don't do this if you >2 sixes AND that's better than your other sets.]
+		sets = defaultdict(lambda:0)
+		roll_result = [
+			rand.randint(1,6 if quality_level > -1 else 10),
+			rand.randint(1,6 if quality_level > -2 else 10),
+			rand.randint(1,6 if quality_level > -3 else 10),
+			rand.randint(1,6 if quality_level > -4 else 10),
+			rand.randint(1,6 if quality_level > -5 else 10)]
+
+		result = pool_digest(roll_result, quality_level)
+		if quality_level > 5 and not result.quintuple:
+			# Check for rerolls.
+			reroll_count = quality_level - 5
+			if result.best_quadruple:
+				if result.best_quadruple != 6:
+					# No quints, and our quads aren't 6es. Try for quints.
+					reroll_sixes(roll_result, reroll_count)
+			elif result.best_triple:
+				if result.best_triple != 6:
+					# No quints or quads, and our trips aren't 6es. Try for quads.
+					reroll_sixes(roll_result, reroll_count)
+			else:
+				# Nothing better than a pair. Even if it's a pair of sixes, that's a fail.
+				reroll_sixes(roll_result, reroll_count)
+			result = pool_digest(roll_result, quality_level)
+		if result.quintuple:
+			return 5
+		elif result.best_quadruple:
+			return 4
+		elif result.skillful_triple:
+			return 3
+		elif result.best_triple:
+			return 2
+		elif result.successful_double:
+			return 1
+		elif result.best_double:
+			return 0
+		else:
+			return -1
 	def perform_test(self, test):
-		raise NotImplementedError("TODO: Perform tests")
+		if test.type == 'broad':
+			return self.perform_luck_test(self.chance_to_pass_broad_test(test))
+		elif test.type == 'narrow':
+			return self.perform_luck_test(self.chance_to_pass_narrow_test(test))
+		elif test.type == 'luck':
+			return self.perform_luck_test(test.difficulty * Decimal('.01'))
+		elif test.type == 'pool':
+			return self.perform_pool_test(test)
+		else:
+			raise NotImplementedError("TODO: Test type %s"%(test.type))
 	def apply_outcomes(self, outcomes):
 		for outcome in outcomes:
 			if outcome.tag_name == 'set':

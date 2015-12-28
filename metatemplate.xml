@@ -66,7 +66,7 @@
 			<cost mt-qty='0-1' actions='int' />
 			<!-- Pool tests are JKM count-duplicate dicepool style. TODO: "special" type, which takes a test=NumExpr. -->
 			<!-- Tests technically return a number indicating the degree of success. For classic Storynexus types that's only 0 or 1 though. -->
-			<test mt-plural='tests' mt-qty='0+' mt-id='local' quality='Ref(Quality)' difficulty='int[0]' type='enum(broad,narrow,pool)' visible='bool[True]' />
+			<test mt-plural='tests' mt-qty='0+' mt-id='local' quality='Ref(Quality)' difficulty='int[0]' scaler='int[None]' type='enum(broad,narrow,pool)' visible='bool[True]' />
 			<result mt-plural='results' mt-qty='1+' linkedstorylet='Ref(Storylet)[None]'>
 				<depend mt-plural='dependencies' mt-qty='0+' on='LocalRef(test)' min='int[1]' max='int[None]' />
 				<title mt-qty='1'>XML</title>
