@@ -29,6 +29,8 @@
 		<name mt-qty='0-1'>XML</name>
 		<description mt-qty='1'>XML</description>
 		<formatted mt-qty='0-1'>Formatter</formatted>
+		<success mt-qty='0-1'>Formatter</success>
+		<failure mt-qty='0-1'>Formatter</failure>
 		<!-- Hints also appear in un-fulfilled requirements. -->
 		<hint mt-qty='0-1'>XML</hint>
 		<note mt-qty='0-1'>XML</note>

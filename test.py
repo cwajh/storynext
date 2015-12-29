@@ -7,6 +7,8 @@ import itertools
 import re
 import getch
 import sys
+import tempfile
+import subprocess
 
 with open('metatemplate.xml') as qq:
 	template_doc = etree.parse(qq)
@@ -74,43 +76,57 @@ print("entities:", "\n\t".join(repr(q) for q in global_lookup.keys()))
 
 prettyprint(gameworld)
 
-print("=========================================================")
+
+def choose_from_options(options, print_option_for_menu_item):
+	menu_items = list(zip(string.digits+string.ascii_lowercase,options))
+	menu_dict = dict(menu_items)
+	if len(menu_items) > 36:
+		raise NotImplementedError("Need pagination for %d storylets"%(len(menu_items)))
+	for button, choice in menu_items:
+		print_option_for_menu_item(button, choice)
+	ch = getch.getch()
+	if ch in ('\x03','\x04','\x1b'):
+		print("Bye!")
+		sys.exit(0)
+	if ch.lower() not in menu_dict:
+		print("?????")
+		sys.exit(1)
+	return menu_dict[ch.lower()]
+
+
+def choose_storylet(storylets):
+	def print_option(button, storylet):
+		print('%s.\t%s'%(button.upper(), storylet.title))
+		# TODO: better way to autogen preview text
+		preview = storylet.preview or re.split('[.!?]', storylet.body)[0]+'...'
+		print("\t"+preview)
+	return choose_from_options(storylets, print_option)
+def choose_branch(branches):
+	def print_option(button, branch):
+		print('%s.\t%s%s'%(button.upper(), '[%s]'%branch.button if branch.button else "", branch.title))
+		print("\t"+branch.body)
+		if branch.hint:
+			print("\t(%s)"%branch.hint)
+	return choose_from_options(branches, print_option)
+
 
 chara = character.Character(gameworld,traits=None,event_delegate=(lambda x:print(x)))
-#print(chara.traits())
-menu_items = list(zip(string.digits+string.ascii_lowercase,chara.eligible_storylets()))
-menu_dict = dict(menu_items)
-if len(menu_items) > 36:
-	raise NotImplementedError("Need pagination for %d storylets"%(len(menu_items)))
-for button, storylet in menu_items:
-	print('%s.\t%s'%(button.upper(), storylet.title))
-	# TODO: something better than this.
-	preview = storylet.preview or re.split('[.!?]', storylet.body)[0]+'...'
-	print("\t"+preview)
-ch = getch.getch()
-if ch in ('\x03','\x04','\x1b'):
-	print("Bye!")
-	sys.exit(0)
-if ch.lower() not in menu_dict:
-	print("?????")
-	sys.exit(1)
-chosen_storylet = menu_dict[ch.lower()]
+
+print("=========================================================")
+storylets = chara.eligible_storylets()
+storylet = choose_storylet(storylets)
+print("---------------------------------------------------------")
 print(storylet.title)
 print(storylet.body)
-menu_items = list(zip(string.digits+string.ascii_lowercase,chara.eligible_branches_for_storylet(storylet)))
-menu_dict = dict(menu_items)
-for button, branch in menu_items:
-	print('%s.\t%s%s'%(button.upper(), '[%s]'%branch.button if branch.button else "", branch.title))
-	print("\t"+branch.body)
-	if branch.hint:
-		print("\t(%s)"%branch.hint)
-ch = getch.getch()
-if ch in ('\x03','\x04','\x1b'):
-	print("Bye!")
-	sys.exit(0)
-if ch.lower() not in menu_dict:
-	print("?????")
-	sys.exit(1)
+branches = chara.eligible_branches_for_storylet(storylet)
+chosen_branch = choose_branch(branches)
+print("---------------------------------------------------------")
+result = chara.result_of_taking_branch(chosen_branch)
+print(result.title)
+with tempfile.NamedTemporaryFile() as body:
+	body.write(result.body.encode())
+	body.flush()
+	subprocess.call(['links','-dump',body.name])
 
 	
 	

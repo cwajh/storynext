@@ -13,7 +13,7 @@ import random
 
 def log(*args,**kwargs):
 	pass
-log = print
+#log = print
 
 
 def nth_pyramid_number(n):
@@ -61,7 +61,7 @@ SelectedStorylet = collections.namedtuple("SelectedStorylet","storylet failed_re
 def level_change_notification(quality, level):
 	levels = quality.levels
 	upstack_quality = quality
-	while not levels and upstack_quality.template.dereference():
+	while not levels and upstack_quality.template and upstack_quality.template.dereference():
 		upstack_quality = upstack_quality.template.dereference()
 		levels = upstack_quality.levels
 	change_messages = sorted([l for l in quality.levels if l.value <= level], key=(lambda q: q.value))
@@ -72,7 +72,7 @@ def level_change_notification(quality, level):
 			return Notification(quality.image, "You no longer have any %s."%(level, quality.name))
 	image = change_messages[-1].changetext.image or change_messages[-1].image or quality.image
 	upstack_quality = quality
-	while not image and upstack_quality.template.dereference():
+	while not image and upstack_quality.template and upstack_quality.template.dereference():
 		upstack_quality = upstack_quality.template.dereference()
 		image = upstack_quality.image
 	return Notification(image, change_messages[-1].changetext.body.format(quality=quality.name, level_desc=change_messages[-1].description, level=level))
@@ -80,21 +80,37 @@ def level_change_notification(quality, level):
 def cp_change_notification(quality, by=0):
 	levels = quality.levels
 	upstack_quality = quality
-	while not levels and upstack_quality.template.dereference():
+	while not levels and upstack_quality.template and upstack_quality.template.dereference():
 		upstack_quality = upstack_quality.template.dereference()
 		levels = upstack_quality.levels
 	change_messages = sorted([l for l in quality.levels if l.value <= level], key=(lambda q: q.value))
 	image = change_messages[-1].image or quality.image
 	upstack_quality = quality
-	while not image and upstack_quality.template.dereference():
+	while not image and upstack_quality.template and upstack_quality.template.dereference():
 		upstack_quality = upstack_quality.template.dereference()
 		image = upstack_quality.image
 	return Notification(image, "%s is %s..."%(quality.name, "increasing" if by>0 else "decreasing"))
 
+def test_result_notification(test, result):
+	image = quality.image
+	upstack_quality = quality
+	while not image and upstack_quality.template.dereference():
+		upstack_quality = upstack_quality.template.dereference()
+		image = upstack_quality.image
+	message = quality.success if result > 0 else quality.failure
+	upstack_quality = quality
+	while not message and upstack_quality.template.dereference():
+		upstack_quality = upstack_quality.template.dereference()
+		message = upstack_quality.success if result > 0 else upstack_quality.failure
+	if not message:
+		message = "You succeeded at a {quality} challenge!" if result > 0 else "You failed at a {quality} challenge!"
+	message = message.format(quality=quality.name)
+	return Notification(image, message)
+
 def event_scheduled_notification(event):
 	return Notification(event.image, event.warning or "Something's been set in motion.")
 
-PoolDigest = namedtuple('PoolDigest','best_double successful_double best_triple skillful_triple quadruple quintuple')
+PoolDigest = collections.namedtuple('PoolDigest','best_double successful_double best_triple skillful_triple quadruple quintuple')
 def digest_pool(roll_result, quality_level):
 	best_double = None
 	successful_double = False
@@ -221,7 +237,7 @@ class Character:
 			
 	def register_event(self, event):
 		if self.event_delegate:
-			event_delegate(event)
+			self.event_delegate(event)
 	def drain_pending_events(self):
 		while self.pending_event_heap and self.pending_event_heap[0][0] > time.time():
 			yield heapq.heappop(self.pending_event_heap)[1]
@@ -320,10 +336,11 @@ class Character:
 					# TODO: real error msg
 					raise NotImplementedError()
 				else:
-					if cp_to_level(self.qualities[quality.id]+outcome.by,quality.cpl,quality.pyramidal) == cp_to_level(self.qualities[quality.id],quality.cpl,quality.pyramidal):
+					new_level = cp_to_level(self.qualities[quality.id]+outcome.by,quality.cpl,quality.pyramidal)
+					if new_level == cp_to_level(self.qualities[quality.id],quality.cpl,quality.pyramidal):
 						self.register_event(cp_change_notification(quality, outcome.by))
 					else:
-						self.register_event(level_change_notification(quality, level))
+						self.register_event(level_change_notification(quality, new_level))
 					self.qualities[quality.id] += outcome.by
 					if self.qualities[quality.id] < 0:
 						self.qualities[quality.id] = 0
@@ -362,3 +379,24 @@ class Character:
 					raise NotImplementedError()
 				heapq.heappush(self.pending_event_heap,(time.mktime(event), event))
 				self.register_event(event_scheduled_notification(event))
+	def result_of_taking_branch(self, branch):
+		test_outcomes = {}
+		for test in branch.tests:
+			outcome = self.perform_test(test)
+			self.register_event(test_result_notification(test.quality.dereference(), outcome))
+			test_outcomes[test.id] = outcome
+		for result in branch.results:
+			all_dependencies_ok = True
+			for dep in result.dependencies:
+				outcome = test_outcomes[dep.on.dereference().id]
+				if dep.min is not None and outcome < dep.min:
+					break
+				if dep.max is not None and outcome > dep.max:
+					break
+			else:
+				# Result is good.
+				self.apply_outcomes(result.changes)
+				self.apply_outcomes(result.sets)
+				if result.moveto:
+					self.apply_outcomes([result.moveto])
+				return result
