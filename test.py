@@ -109,26 +109,44 @@ def choose_branch(branches):
 			print("\t(%s)"%branch.hint)
 	return choose_from_options(branches, print_option)
 
+messages = []
 
-chara = character.Character(gameworld,traits=None,event_delegate=(lambda x:print(x)))
+chara = character.Character(gameworld,traits=None,event_delegate=(lambda x:messages.append(x.message)))
 
-print("=========================================================")
-storylets = chara.eligible_storylets()
-storylet = choose_storylet(storylets)
-print("---------------------------------------------------------")
-print(storylet.title)
-print(storylet.body)
-branches = chara.eligible_branches_for_storylet(storylet)
-chosen_branch = choose_branch(branches)
-print("---------------------------------------------------------")
-result = chara.result_of_taking_branch(chosen_branch)
-print(result.title)
-with tempfile.NamedTemporaryFile() as body:
-	body.write(result.body.encode())
-	body.flush()
-	subprocess.call(['links','-dump',body.name])
-
-	
+linked_storylet = None
+while True:
+	print("=========================================================")
+	if linked_storylet:
+		storylet = linked_storylet.dereference()
+	else:
+		storylets = [q for q in chara.eligible_storylets()]
+		mandatory_storylets = [q for q in storylets if q.mandatory]
+		character.log('Eligible storylets: '+(' ====== '.join(q.id for q in storylets)))
+		if mandatory_storylets:
+			storylet = mandatory_storylets[0]
+		else:
+			storylet = choose_storylet(storylets)
+	print("---------------------------------------------------------")
+	branches = chara.eligible_branches_for_storylet(storylet)
+	if storylet.autofire:
+		chosen_branch = next(iter(branches))
+	else:
+		print(storylet.title)
+		print(storylet.body)
+		#TODO: nevermind
+		chosen_branch = choose_branch(branches)
+	print("---------------------------------------------------------")
+	result = chara.result_of_taking_branch(chosen_branch)
+	print(result.title)
+	with tempfile.NamedTemporaryFile() as body:
+		body.write(result.body.encode())
+		body.flush()
+		subprocess.call(['links','-dump',body.name])
+	for message in messages:
+		print(message)
+	while messages:
+		messages.pop()
+	linked_storylet = result.linkedstorylet
 	
 
 #qq = open('fortitude.xml')

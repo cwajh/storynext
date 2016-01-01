@@ -69,7 +69,7 @@ def level_change_notification(quality, level):
 		if level:
 			return Notification(quality.image, "You now have %dx %s."%(level, quality.name))
 		else:
-			return Notification(quality.image, "You no longer have any %s."%(level, quality.name))
+			return Notification(quality.image, "You no longer have any %s."%(quality.name))
 	image = change_messages[-1].changetext.image or change_messages[-1].image or quality.image
 	upstack_quality = quality
 	while not image and upstack_quality.template and upstack_quality.template.dereference():
@@ -219,20 +219,21 @@ class Character:
 					if not requirement.vwrf:
 						break
 			else:
-				log('...passback')
+				log('...passback ' + storylet.id)
 				# Qualified for all requirements, or failed with VWRF=true
 				# TODO: return context
 				yield storylet
 	def eligible_branches_for_storylet(self, storylet):
 		for branch in storylet.branches:
 			log('can we do `%s`'%(branch.id))
+			failed_requirements = []
 			for requirement in branch.requirements:
 				if not self.qualifies_for(requirement):
 					failed_requirements.append(requirement)
 					if not requirement.vwrf:
 						break
 			else:
-				log('...passback')
+				log('...passback ' + branch.id)
 				yield branch
 			
 	def register_event(self, event):
@@ -326,10 +327,11 @@ class Character:
 					# TODO: real error msg
 					raise NotImplementedError()
 				else:
-					if cp_to_level(self.qualities[quality.id],quality.cpl,quality.pyramidal) != outcome.to:
+					old_level = cp_to_level(self.qualities[quality.id],quality.cpl,quality.pyramidal)
+					if old_level != outcome.to:
 						new_cp_value = level_to_cp(outcome.to,quality.cpl,quality.pyramidal)
 						self.qualities[quality.id] = new_cp_value
-						self.register_event(level_change_notification(quality, level))
+						self.register_event(level_change_notification(quality, outcome.to))
 			if outcome.tag_name == 'change':
 				quality = outcome.quality.dereference()
 				if quality is None:
